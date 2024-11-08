@@ -5,6 +5,13 @@ function App() {
   const [message, setMessage] = useState('');
 
   const handleFileChange = (e) => {
+
+    //make sure it is a CSV file
+    if (e.target.files[0] && e.target.files[0].type !== 'text/csv') {
+      setMessage('Veuillez sélectionner un fichier CSV valide.');
+      setFile(null);
+      return;
+    }
     setFile(e.target.files[0]);
   };
 
@@ -15,14 +22,26 @@ function App() {
     }
     const formData = new FormData();
     formData.append('file', file);
-    console.log('formData ', formData);
 
     try {
       const response = await fetch('http://localhost:5000/upload', {
         method: 'POST',
         body: formData,
       });
-      console.log('response',response)
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a download link.
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'result.zip';
+      document.body.appendChild(link);
+      link.click();
+      setMessage('File processed and downloaded successfully.');
+
+      // free up memory.
+      link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.log('error ',error)
       setMessage('Error uploading file.');
